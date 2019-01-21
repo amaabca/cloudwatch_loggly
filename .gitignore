@@ -243,3 +243,8 @@ $RECYCLE.BIN/
 .aws-sam/
 .build
 .params.*
+Gemfile.lock
+.bundle
+coverage
+.rspec_status
+vendor/bundle

@@ -1,53 +1,58 @@
-module Loggly
-  class Client
-    attr_accessor :token, :host, :bulk, :input_type, :uri, :tags
+module Push
+  module Loggly
+    class Client
+      HOST = 'https://logs-01.loggly.com'.freeze
 
-    def initialize(opts = {})
-      self.token = opts.fetch(:token)
-      self.host = opts.fetch(:host) { 'https://logs-01.loggly.com' }
-      self.bulk = opts.fetch(:bulk) { false }
-      self.input_type = bulk ? 'bulk' : 'inputs'
-      self.tags = opts.fetch(:tags)
-      self.uri = URI("#{host}/#{input_type}/#{token}/")
-    end
+      attr_accessor :token, :host, :bulk, :input_type, :uri, :tags
 
-    def push!(messages)
-      if bulk
-        push_bulk!(messages)
-      else
-        push_single!(messages)
+      def initialize(opts = {})
+        self.token = opts.fetch(:token)
+        self.host = opts.fetch(:host) { HOST }
+        self.bulk = opts.fetch(:bulk) { false }
+        self.input_type = bulk ? 'bulk' : 'inputs'
+        self.tags = opts.fetch(:tags)
+        self.uri = URI("#{host}/#{input_type}/#{token}/")
       end
-    end
 
-    private
-
-    def push_single!(messages)
-      messages.each do |message|
-        request!(message)
+      def push!(messages)
+        if bulk
+          push_bulk!(messages)
+        else
+          push_single!(messages)
+        end
       end
-    end
 
-    def push_bulk!(messages)
-      request!(messages.join("\n"))
-    end
+      private
 
-    def request!(data)
-      Net::HTTP.start(
-        uri.host,
-        uri.port,
-        open_timeout: 2,
-        read_timeout: 5,
-        use_ssl: true
-      ) do |https|
-        request = Net::HTTP::Post.new(uri.request_uri)
-        request.body = data
-        request['CONTENT-TYPE'] = 'text/plain'
-        request['X-LOGGLY-TAG'] = tags
-        response = https.request(request)
-        Exceptions::Base.from_http(response)
+      def push_single!(messages)
+        messages.map do |message|
+          request!(message)
+        end
       end
-    rescue Net::OpenTimeout, Net::ReadTimeout
-      raise Exceptions::Timeout, 'server timeout'
+
+      def push_bulk!(messages)
+        body = messages.map(&:chomp).join("\n")
+        request!(body)
+      end
+
+      def request!(data)
+        Net::HTTP.start(
+          uri.host,
+          uri.port,
+          open_timeout: 2,
+          read_timeout: 5,
+          use_ssl: true
+        ) do |https|
+          request = Net::HTTP::Post.new(uri.request_uri)
+          request.body = data
+          request['CONTENT-TYPE'] = 'text/plain'
+          request['X-LOGGLY-TAG'] = tags
+          response = https.request(request)
+          Exceptions::Base.from_http(response)
+        end
+      rescue Net::OpenTimeout, Net::ReadTimeout
+        raise Exceptions::Timeout, 'server timeout'
+      end
     end
   end
 end

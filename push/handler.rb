@@ -12,6 +12,10 @@ require_relative 'loggly/exceptions/timeout'
 require_relative 'loggly/client'
 require_relative 'cloudwatch/event'
 
-def handle(event:, context:)
-  Cloudwatch::Event.new(raw: event).to_loggly!
+module Push
+  class << self
+    def handle(event:, context:)
+      Cloudwatch::Event.new(raw: event).to_loggly!
+    end
+  end
 end

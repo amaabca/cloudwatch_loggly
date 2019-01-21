@@ -30,6 +30,12 @@ Parameters:
     AllowedValues:
       - 'true'
       - 'false'
+  ScheduleExpressionParameter:
+    Type: String
+    Description: >
+      The AWS schedule expression that triggers the subscription lambda.
+      See: https://docs.aws.amazon.com/lambda/latest/dg/tutorial-scheduled-events-schedule-expressions.html
+    Default: cron(0 16 * * ? *) # 16:00 UTC every day
 
 Globals:
   Function:
@@ -82,7 +88,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: push
-      Handler: handler.handle
+      Handler: handler.Push.handle
       Runtime: ruby2.5
       Role: !GetAtt CloudwatchLogglyPushFunctionRole.Arn
       Environment:
@@ -96,7 +102,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: subscribe
-      Handler: handler.handle
+      Handler: handler.Subscribe.handle
       Runtime: ruby2.5
       Role: !GetAtt CloudwatchLogglySubscribeFunctionRole.Arn
       Environment:
@@ -107,7 +113,7 @@ Resources:
         CronSchedule:
           Type: Schedule
           Properties:
-            Schedule: cron(0 16 * * ? *) # 16:00 UTC every day
+            Schedule: !Ref ScheduleExpressionParameter
   CloudWatchInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
