@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Helpers
   module Fixtures
     PATH = File.join(File.expand_path('../..', __dir__), 'fixtures').freeze

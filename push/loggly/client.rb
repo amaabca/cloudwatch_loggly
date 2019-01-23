@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 module Push
   module Loggly
     class Client
-      HOST = 'https://logs-01.loggly.com'.freeze
+      HOST = 'https://logs-01.loggly.com'
 
       attr_accessor :token, :host, :bulk, :input_type, :uri, :tags
 

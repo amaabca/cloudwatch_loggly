@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Subscribe::Lambda::Function do
   let(:tags) { { 'test' => 'true' } }
   let(:lambda) { Aws::Lambda::Client.new(stub_responses: true) }

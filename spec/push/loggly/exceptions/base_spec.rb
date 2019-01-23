@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Push::Loggly::Exceptions::Base do
   describe '.from_http' do
     context 'with HTTP 200' do

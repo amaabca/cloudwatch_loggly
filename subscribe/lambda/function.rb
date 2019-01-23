@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Subscribe
   module Lambda
     class Function
@@ -92,8 +94,8 @@ module Subscribe
           filter_name_prefix: 'ShipToLoggly',
           limit: 1
         )
-          .subscription_filters
-          .first
+                  .subscription_filters
+                  .first
           &.filter_pattern
       end
     end

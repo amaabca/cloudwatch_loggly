@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Helpers
   module Requests
     def stub_loggly_push_initial

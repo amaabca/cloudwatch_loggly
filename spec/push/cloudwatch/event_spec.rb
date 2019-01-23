@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Push::Cloudwatch::Event do
   let(:event) { JSON.parse(read_fixture('push/event.json')) }
   let(:message) { read_fixture('push/decoded.json') }

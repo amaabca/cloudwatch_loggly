@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Push::Loggly::Client do
   before(:each) do
     prepare_environment!
@@ -29,9 +31,9 @@ describe Push::Loggly::Client do
       it 'returns an array of responses' do
         value = subject.push!(messages)
         expect(value).to eq([
-          '{"success":true}',
-          '{"success":true}'
-        ])
+                              '{"success":true}',
+                              '{"success":true}'
+                            ])
       end
     end
 

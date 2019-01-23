@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Subscribe do
   context '.handle' do
     before(:each) do

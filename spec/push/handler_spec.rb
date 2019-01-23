@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe Push do
   describe '.handle' do
     let(:event) { JSON.parse(read_fixture('push/event.json')) }
