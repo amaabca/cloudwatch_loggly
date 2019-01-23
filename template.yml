@@ -1,7 +1,26 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  CloudWatch to Loggly Log Forwarder - 0.1.0
+  CloudWatch to Loggly Log Forwarder
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: cloudwatch-loggly-forwarder
+    Description: >
+      Automatically forward your Lambda's Cloudwatch Logs to Loggly! No interaction required.
+    Author: Alberta Motor Association
+    SpdxLicenseId: MIT
+    LicenseUrl: LICENSE
+    ReadmeUrl: README.md
+    Labels:
+      - cloudwatch
+      - logs
+      - loggly
+      - forwarder
+      - lambda
+    HomePageUrl: https://github.com/amaabca/cloudwatch_loggly
+    SemanticVersion: 0.1.0
+    SourceCodeUrl: https://github.com/amaabca/cloudwatch_loggly
 
 Parameters:
   LogglyTokenParameter:
@@ -36,10 +55,15 @@ Parameters:
       The AWS schedule expression that triggers the subscription lambda.
       See: https://docs.aws.amazon.com/lambda/latest/dg/tutorial-scheduled-events-schedule-expressions.html
     Default: cron(0 16 * * ? *) # 16:00 UTC every day
+  FunctionTimeoutParameter:
+    Type: Number
+    Description: >
+      The number of seconds for the lambda function timeout.
+    Default: 10
 
 Globals:
   Function:
-    Timeout: 10
+    Timeout: !Ref FunctionTimeoutParameter
 
 Resources:
   CloudwatchLogglyPushFunctionRole:
@@ -97,7 +121,7 @@ Resources:
           LOG_TAGS: !Ref LogTagsParameter
           BULK_TRANSMISSION: !Ref BulkTransmissionParameter
       Tags:
-        suppress_log_subscribe: true
+        cloudwatch_loggly_suppress_subscribe: true
   CloudwatchLogglySubscribeFunction:
     Type: AWS::Serverless::Function
     Properties:

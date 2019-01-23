@@ -56,7 +56,7 @@ describe Subscribe::Lambda::Function do
         lambda.stub_data(
           :list_tags,
           tags: {
-            'suppress_log_subscribe' => 'true'
+            'cloudwatch_loggly_suppress_subscribe' => 'true'
           }
         )
       end

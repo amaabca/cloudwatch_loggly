@@ -63,7 +63,7 @@ module Subscribe
       end
 
       def suppress?
-        !!tags['suppress_log_subscribe']
+        !!tags['cloudwatch_loggly_suppress_subscribe']
       end
 
       def stale?
@@ -77,7 +77,7 @@ module Subscribe
       end
 
       def filter_pattern
-        ENV.fetch('FILTER_PATTERN')
+        tags['cloudwatch_loggly_filter_pattern'] || ENV.fetch('FILTER_PATTERN')
       end
 
       def fetch_tags!
@@ -93,10 +93,7 @@ module Subscribe
           log_group_name: cloudwatch_log_group_name,
           filter_name_prefix: 'ShipToLoggly',
           limit: 1
-        )
-                  .subscription_filters
-                  .first
-          &.filter_pattern
+        ).subscription_filters.first&.filter_pattern
       end
     end
   end

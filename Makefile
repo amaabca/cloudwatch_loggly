@@ -1,18 +1,14 @@
 .PHONY: all clean test
 
+REGION := us-east-1
+BUCKET_NAME := $(shell aws cloudformation list-exports --query 'Exports[?Name==`CloudwatchLogglySAMBucketName`].Value' --output text --region $(REGION))
 TEMPLATE_HASH := $(shell md5 -q template.yml)
-PARAMETERS := $(shell cat .params.private)
 
-all: .params.private .build/$(TEMPLATE_HASH)/package.yml
-	@sam deploy --template-file .build/$(TEMPLATE_HASH)/package.yml --stack-name cloudwatch-to-loggly --capabilities CAPABILITY_IAM --parameter-overrides $(PARAMETERS)
-
-.params.private:
-	@echo 'A .params.private file was not found in the project root. Please create this file.'
-	@touch .params.private
-	@exit 1
+all: .build/$(TEMPLATE_HASH)/package.yml
+	@sam publish --template .build/$(TEMPLATE_HASH)/package.yml --profile $(AWS_PROFILE) --region $(REGION)
 
 .build/%/package.yml: .build .build/$(TEMPLATE_HASH)
-	@sam build --use-container
+	@sam build --use-container --profile $(AWS_PROFILE) --region $(REGION)
 	@sam package --template-file template.yml --output-template-file $@ --s3-bucket $(BUCKET_NAME)
 
 .build:
