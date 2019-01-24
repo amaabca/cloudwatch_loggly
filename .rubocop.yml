@@ -1,0 +1,25 @@
+AllCops:
+  DisplayCopNames: true
+  TargetRubyVersion: 2.5
+  Exclude:
+    - 'bin/**/*'
+    - 'vendor/**/*'
+Documentation:
+  Enabled: false
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+Metrics/LineLength:
+  Max: 120
+Style/Lambda:
+  EnforcedStyle: literal
+Style/GuardClause:
+  Enabled: false
+Metrics/MethodLength:
+  Max: 20
+Style/DoubleNegation:
+  Enabled: false
+Lint/UnusedMethodArgument:
+  Exclude:
+    - push/handler.rb
+    - subscribe/handler.rb

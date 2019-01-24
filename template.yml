@@ -1,0 +1,148 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  CloudWatch to Loggly Log Forwarder
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: cloudwatch-loggly-forwarder
+    Description: >
+      Automatically forward your Lambda's Cloudwatch Logs to Loggly! No interaction required.
+    Author: Alberta Motor Association
+    SpdxLicenseId: MIT
+    LicenseUrl: LICENSE
+    ReadmeUrl: README.md
+    Labels:
+      - cloudwatch
+      - logs
+      - loggly
+      - forwarder
+      - lambda
+    HomePageUrl: https://github.com/amaabca/cloudwatch_loggly
+    SemanticVersion: 0.1.0
+    SourceCodeUrl: https://github.com/amaabca/cloudwatch_loggly
+
+Parameters:
+  LogglyTokenParameter:
+    Type: String
+    Description: >
+      The Loggly customer token to push messages via the Loggly API.
+    NoEcho: true
+  LogTagsParameter:
+    Type: String
+    Description: >
+      A comma-separated list of tags for the log event.
+      See: https://www.loggly.com/docs/tags/
+    Default: lambda
+  FilterPatternParameter:
+    Type: String
+    Description: >
+      An AWS CloudWatch subscription filter pattern directive. Defaults to the empty string.
+      See: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
+    Default: ''
+  BulkTransmissionParameter:
+    Type: String
+    Description: >
+      Tells the log forwarder to use Loggly's bulk transmission endpoint for increased efficiency. Defaults to true.
+      See: https://www.loggly.com/docs/http-bulk-endpoint/
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
+  ScheduleExpressionParameter:
+    Type: String
+    Description: >
+      The AWS schedule expression that triggers the subscription lambda.
+      See: https://docs.aws.amazon.com/lambda/latest/dg/tutorial-scheduled-events-schedule-expressions.html
+    Default: cron(0 16 * * ? *) # 16:00 UTC every day
+  FunctionTimeoutParameter:
+    Type: Number
+    Description: >
+      The number of seconds for the lambda function timeout.
+    Default: 10
+
+Globals:
+  Function:
+    Timeout: !Ref FunctionTimeoutParameter
+
+Resources:
+  CloudwatchLogglyPushFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Action:
+            - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+              - lambda.amazonaws.com
+  CloudwatchLogglySubscribeFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+      Policies:
+        - PolicyName: LogSubscriptionFilterWriteAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:ListFunctions
+                  - lambda:ListTags
+                  - logs:DescribeSubscriptionFilters
+                  - logs:PutSubscriptionFilter
+                Resource: '*'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Action:
+            - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+              - lambda.amazonaws.com
+  CloudwatchLogglyPushFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: push
+      Handler: handler.Push.handle
+      Runtime: ruby2.5
+      Role: !GetAtt CloudwatchLogglyPushFunctionRole.Arn
+      Environment:
+        Variables:
+          LOGGLY_TOKEN: !Ref LogglyTokenParameter
+          LOG_TAGS: !Ref LogTagsParameter
+          BULK_TRANSMISSION: !Ref BulkTransmissionParameter
+      Tags:
+        cloudwatch_loggly_suppress_subscribe: true
+  CloudwatchLogglySubscribeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: subscribe
+      Handler: handler.Subscribe.handle
+      Runtime: ruby2.5
+      Role: !GetAtt CloudwatchLogglySubscribeFunctionRole.Arn
+      Environment:
+        Variables:
+          DESTINATION_ARN: !GetAtt CloudwatchLogglyPushFunction.Arn
+          FILTER_PATTERN: !Ref FilterPatternParameter
+      Events:
+        CronSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: !Ref ScheduleExpressionParameter
+  CloudWatchInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CloudwatchLogglyPushFunction
+      Principal: !Sub logs.${AWS::Region}.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*:*
