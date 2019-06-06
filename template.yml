@@ -19,7 +19,7 @@ Metadata:
       - forwarder
       - lambda
     HomePageUrl: https://github.com/amaabca/cloudwatch_loggly
-    SemanticVersion: 0.1.0
+    SemanticVersion: 0.2.0
     SourceCodeUrl: https://github.com/amaabca/cloudwatch_loggly
 
 Parameters:

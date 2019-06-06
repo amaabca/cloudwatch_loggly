@@ -7,7 +7,7 @@ module Subscribe
 
       class << self
         def all(lambda = Aws::Lambda::Client.new, cloudwatch = Aws::CloudWatchLogs::Client.new)
-          lambda.list_functions.functions.map do |function|
+          all_functions(lambda).map do |function|
             new(
               name: function.function_name,
               arn: function.function_arn,
@@ -32,6 +32,21 @@ module Subscribe
               hash[:changed] << function.name
             end
           end
+        end
+
+        private
+
+        def all_functions(lambda)
+          marker = nil
+          functions = []
+
+          loop do
+            response = lambda.list_functions(marker: marker)
+            functions << response.functions
+            break unless marker = response.next_marker
+          end
+
+          return functions.flatten
         end
       end
 
@@ -59,17 +74,13 @@ module Subscribe
       private
 
       def up_to_date?
-        !stale?
+        filter_pattern == remote_filter_pattern
+      rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException
+        true
       end
 
       def suppress?
         !!tags['cloudwatch_loggly_suppress_subscribe']
-      end
-
-      def stale?
-        filter_pattern != remote_filter_pattern
-      rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException
-        false
       end
 
       def destination_arn
