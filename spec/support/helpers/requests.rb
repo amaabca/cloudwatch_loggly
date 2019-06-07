@@ -7,13 +7,15 @@ module Helpers
     end
 
     def stub_loggly_push(opts = {})
+      message = opts.fetch(:message)
+      request_body = message.gsub(/\R+/, '')
       stub_loggly_push_initial
         .with(
           headers: {
             'X-LOGGLY-TAG' => opts.fetch(:tags),
             'CONTENT-TYPE' => 'text/plain'
           },
-          body: opts.fetch(:message)
+          body: request_body
         )
         .to_return(
           status: opts.fetch(:status) { 200 },
@@ -23,7 +25,7 @@ module Helpers
 
     def stub_loggly_push_bulk(opts = {})
       messages = opts.fetch(:messages)
-      request_body = messages.map(&:chomp).join("\n")
+      request_body = messages.map { |message| message.gsub(/\R+/, '') }.join("\n")
       stub_request(:post, loggly_url_for('bulk/1234/'))
         .with(
           headers: { 'CONTENT-TYPE' => 'text/plain' },

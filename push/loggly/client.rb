@@ -28,12 +28,13 @@ module Push
 
       def push_single!(messages)
         messages.map do |message|
-          request!(message)
+          body = message.gsub(/\R+/, '')
+          request!(body)
         end
       end
 
       def push_bulk!(messages)
-        body = messages.map(&:chomp).join("\n")
+        body = messages.map { |message| message.gsub(/\R+/, '') }.join("\n")
         request!(body)
       end
 

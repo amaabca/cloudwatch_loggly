@@ -11,7 +11,7 @@ describe Push::Loggly::Client do
     let(:messages) do
       [
         "Message one\n",
-        "Message two\n"
+        "Message two\t{ json: \n { key: 'value',\n many: 'lines' } }\n"
       ]
     end
 
