@@ -43,10 +43,10 @@ module Subscribe
           loop do
             response = lambda.list_functions(marker: marker)
             functions << response.functions
-            break unless marker = response.next_marker
+            break unless (marker = response.next_marker)
           end
 
-          return functions.flatten
+          functions.flatten
         end
       end
 
