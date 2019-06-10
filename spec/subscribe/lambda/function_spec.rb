@@ -2,6 +2,7 @@
 
 describe Subscribe::Lambda::Function do
   let(:tags) { { 'test' => 'true' } }
+  let(:destination_arn) { ENV.fetch('DESTINATION_ARN') }
   let(:lambda) { Aws::Lambda::Client.new(stub_responses: true) }
   let(:cloudwatch) { Aws::CloudWatchLogs::Client.new(stub_responses: true) }
   let(:tags_stub) { lambda.stub_data(:list_tags, tags: tags) }
@@ -79,7 +80,12 @@ describe Subscribe::Lambda::Function do
       let(:filter_stub) do
         cloudwatch.stub_data(
           :describe_subscription_filters,
-          subscription_filters: [{ filter_pattern: '' }]
+          subscription_filters: [
+            {
+              filter_pattern: '',
+              destination_arn: destination_arn
+            }
+          ]
         )
       end
 
@@ -108,11 +114,38 @@ describe Subscribe::Lambda::Function do
       end
     end
 
-    context 'when the subscription is not up to date' do
+    context 'when the filter pattern is not up to date' do
       let(:filter_stub) do
         cloudwatch.stub_data(
           :describe_subscription_filters,
-          subscription_filters: [{ filter_pattern: 'no.match' }]
+          subscription_filters: [
+            {
+              filter_pattern: 'no.match',
+              destination_arn: destination_arn
+            }
+          ]
+        )
+      end
+
+      before(:each) do
+        cloudwatch.stub_responses(:describe_subscription_filters, filter_stub)
+      end
+
+      it 'returns false' do
+        expect(subject.skip?).to be false
+      end
+    end
+
+    context 'when the destination arn is not up to date' do
+      let(:filter_stub) do
+        cloudwatch.stub_data(
+          :describe_subscription_filters,
+          subscription_filters: [
+            {
+              filter_pattern: '',
+              destination_arn: function_one_arn
+            }
+          ]
         )
       end
 
@@ -159,13 +192,21 @@ describe Subscribe::Lambda::Function do
     let(:log_group_one_subscription) do
       cloudwatch.stub_data(
         :describe_subscription_filters,
-        subscription_filters: [{ filter_pattern: '' }]
+        subscription_filters: [
+          {
+            filter_pattern: '',
+            destination_arn: destination_arn
+          }
+        ]
       )
     end
     let(:log_group_two_subscription) do
       cloudwatch.stub_data(
         :describe_subscription_filters,
-        subscription_filters: [{ filter_pattern: 'no.match' }]
+        subscription_filters: [
+          { filter_pattern: 'no.match' },
+          destination_arn: destination_arn
+        ]
       )
     end
 
