@@ -7,6 +7,7 @@ describe Subscribe::Lambda::Function do
   let(:tags_stub) { lambda.stub_data(:list_tags, tags: tags) }
   let(:function_one_arn) { 'arn:aws:lambda:us-west-2:123456789012:function:One' }
   let(:function_two_arn) { 'arn:aws:lambda:us-west-2:123456789012:function:Two' }
+  let(:function_three_arn) { 'arn:aws:lambda:us-west-2:123456789012:function:Three' }
   let(:functions) do
     [
       {
@@ -16,6 +17,14 @@ describe Subscribe::Lambda::Function do
       {
         function_name: 'two',
         function_arn: function_two_arn
+      }
+    ]
+  end
+  let(:more_functions) do
+    [
+      {
+        function_name: 'three',
+        function_arn: function_three_arn
       }
     ]
   end
@@ -118,15 +127,31 @@ describe Subscribe::Lambda::Function do
   end
 
   describe '.all' do
-    before(:each) do
-      lambda.stub_responses(:list_functions, functions_stub)
-      lambda.stub_responses(:list_tags, tags_stub)
+    context 'where there is 1 page of results' do
+      before(:each) do
+        lambda.stub_responses(:list_functions, functions_stub)
+      end
+
+      it 'returns an array of Subscribe::Lambda::Function instances' do
+        data = described_class.all(lambda)
+        expect(data.size).to eq(2)
+        expect(data.first).to be_a(described_class)
+      end
     end
 
-    it 'returns an array of Subscribe::Lambda::Function instances' do
-      data = described_class.all(lambda)
-      expect(data.size).to eq(2)
-      expect(data.first).to be_a(described_class)
+    context 'where there are 2 pages of results' do
+      let(:functions_stub) { lambda.stub_data(:list_functions, functions: functions, next_marker: 'abcdefg') }
+      let(:more_functions_stub) { lambda.stub_data(:list_functions, functions: more_functions) }
+
+      before(:each) do
+        lambda.stub_responses(:list_functions, [functions_stub, more_functions_stub])
+      end
+
+      it 'returns an array of Subscribe::Lambda::Function instances' do
+        data = described_class.all(lambda)
+        expect(data.size).to eq(3)
+        expect(data.last).to be_a(described_class)
+      end
     end
   end
 
