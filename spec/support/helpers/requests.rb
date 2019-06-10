@@ -8,7 +8,7 @@ module Helpers
 
     def stub_loggly_push(opts = {})
       message = opts.fetch(:message)
-      request_body = message.gsub(/\R+/, '')
+      request_body = message.delete("\n")
       stub_loggly_push_initial
         .with(
           headers: {
@@ -25,7 +25,7 @@ module Helpers
 
     def stub_loggly_push_bulk(opts = {})
       messages = opts.fetch(:messages)
-      request_body = messages.map { |message| message.gsub(/\R+/, '') }.join("\n")
+      request_body = messages.map { |message| message.delete("\n") }.join("\n")
       stub_request(:post, loggly_url_for('bulk/1234/'))
         .with(
           headers: { 'CONTENT-TYPE' => 'text/plain' },

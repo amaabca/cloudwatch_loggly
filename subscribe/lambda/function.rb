@@ -37,16 +37,7 @@ module Subscribe
         private
 
         def all_functions(lambda)
-          marker = nil
-          functions = []
-
-          loop do
-            response = lambda.list_functions(marker: marker)
-            functions << response.functions
-            break unless (marker = response.next_marker)
-          end
-
-          functions.flatten
+          lambda.list_functions.flat_map(&:functions)
         end
       end
 
