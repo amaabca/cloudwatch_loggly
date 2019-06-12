@@ -3,6 +3,8 @@
 module Subscribe
   module Lambda
     class Function
+      FILTER_NAME = 'ShipToLoggly'
+
       attr_accessor :name, :arn, :tags, :lambda, :cloudwatch
 
       class << self
@@ -56,7 +58,7 @@ module Subscribe
       def subscribe!
         !!cloudwatch.put_subscription_filter(
           log_group_name: cloudwatch_log_group_name,
-          filter_name: 'ShipToLoggly',
+          filter_name: FILTER_NAME,
           filter_pattern: filter_pattern,
           destination_arn: destination_arn
         )
@@ -65,7 +67,8 @@ module Subscribe
       private
 
       def up_to_date?
-        filter_pattern == remote_filter_pattern
+        (filter_pattern == remote_filter_pattern) &&
+          (destination_arn == remote_destination_arn)
       rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException
         true
       end
@@ -90,12 +93,22 @@ module Subscribe
         "/aws/lambda/#{name}"
       end
 
+      def subscriptions
+        @subscriptions ||= begin
+          cloudwatch.describe_subscription_filters(
+            log_group_name: cloudwatch_log_group_name,
+            filter_name_prefix: FILTER_NAME,
+            limit: 1
+          ).subscription_filters
+        end
+      end
+
       def remote_filter_pattern
-        cloudwatch.describe_subscription_filters(
-          log_group_name: cloudwatch_log_group_name,
-          filter_name_prefix: 'ShipToLoggly',
-          limit: 1
-        ).subscription_filters.first&.filter_pattern
+        subscriptions.first&.filter_pattern
+      end
+
+      def remote_destination_arn
+        subscriptions.first&.destination_arn
       end
     end
   end

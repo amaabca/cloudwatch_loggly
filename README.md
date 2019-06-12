@@ -1,5 +1,8 @@
 ## CloudWatch to Loggly Forwarder
 
+[![Version](https://img.shields.io/github/tag/amaabca/cloudwatch_loggly.svg)](https://img.shields.io/github/tag/amaabca/cloudwatch_loggly.svg)
+[![Build Status](https://travis-ci.com/amaabca/cloudwatch_loggly.svg?branch=master)](https://travis-ci.com/amaabca/cloudwatch_loggly.svg?branch=master)
+
 Cloudwatch::Loggly is an AWS [SAM](https://github.com/awslabs/serverless-application-model) application that automatically ships the logs from Lambda functions to [Loggly](https://www.loggly.com).
 
 ### Overview
@@ -53,6 +56,8 @@ By default, the value from the `FilterPatternParameter` is used when subscribing
 2. Ensure Docker is installed (the `--use-container` flag is specified during the build phase).
 3. Update the `SemanticVersion` value in `template.yml`.
 4. run `AWS_PROFILE=myprofilename make`
+
+**NOTE**: After publishing a new version, it can take AWS a few hours to propagate the changes across regions. You'll likely see the version update on the Serverless Application Repository in `us-east-1` first.
 
 ### Licence
 
