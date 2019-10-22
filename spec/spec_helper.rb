@@ -5,6 +5,7 @@ require 'rspec'
 require 'webmock/rspec'
 require 'pry'
 require 'ostruct'
+require 'benchmark'
 require_relative '../push/handler'
 require_relative '../subscribe/handler'
 

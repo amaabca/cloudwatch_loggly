@@ -3,7 +3,7 @@
 describe Subscribe::Lambda::Function do
   let(:tags) { { 'test' => 'true' } }
   let(:destination_arn) { ENV.fetch('DESTINATION_ARN') }
-  let(:lambda) { Aws::Lambda::Client.new(stub_responses: true) }
+  let(:lambda) { described_class.build_lambda_client(stub_responses: true) }
   let(:cloudwatch) { Aws::CloudWatchLogs::Client.new(stub_responses: true) }
   let(:tags_stub) { lambda.stub_data(:list_tags, tags: tags) }
   let(:function_one_arn) { 'arn:aws:lambda:us-west-2:123456789012:function:One' }
@@ -41,6 +41,39 @@ describe Subscribe::Lambda::Function do
 
   before(:each) do
     prepare_environment!
+  end
+
+  describe '#initialize' do
+    context 'when hitting an API rate limit for ListTags', github_issue: '5' do
+      before(:each) do
+        # stubbed responses disables retry by default - we need to turn it
+        # back on to test the behavior
+        lambda.handlers.add(Aws::Plugins::RetryErrors::Handler)
+        lambda.stub_responses(
+          :list_tags,
+          [
+            'ThrottlingException',
+            'ThrottlingException',
+            'ThrottlingException',
+            tags_stub
+          ]
+        )
+      end
+
+      it 'sleeps with exponential backoff' do
+        # 1 -> throttle
+        # wait 1s
+        # 2 -> throttle
+        # wait 2s
+        # 3 -> throttle
+        # wait 2s
+        # 4 -> success
+        # >= 5s total
+        time = Benchmark.measure { subject }
+        expect(time.real >= 5).to be true
+        expect(subject).to be_a(Subscribe::Lambda::Function)
+      end
+    end
   end
 
   describe '#subscribe!' do

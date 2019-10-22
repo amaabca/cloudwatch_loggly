@@ -19,7 +19,7 @@ Metadata:
       - forwarder
       - lambda
     HomePageUrl: https://github.com/amaabca/cloudwatch_loggly
-    SemanticVersion: 0.3.0
+    SemanticVersion: 0.4.0
     SourceCodeUrl: https://github.com/amaabca/cloudwatch_loggly
 
 Parameters:
@@ -59,7 +59,7 @@ Parameters:
     Type: Number
     Description: >
       The number of seconds for the lambda function timeout.
-    Default: 10
+    Default: 60
 
 Globals:
   Function:
