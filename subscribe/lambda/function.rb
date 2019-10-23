@@ -8,7 +8,7 @@ module Subscribe
       attr_accessor :name, :arn, :tags, :lambda, :cloudwatch
 
       class << self
-        def all(lambda = build_lambda_client, cloudwatch = Aws::CloudWatchLogs::Client.new)
+        def all(lambda = build_lambda_client, cloudwatch = build_cloudwatchlogs_client)
           all_functions(lambda).map do |function|
             new(
               name: function.function_name,
@@ -19,7 +19,7 @@ module Subscribe
           end
         end
 
-        def subscribe_all!(lambda = build_lambda_client, cloudwatch = Aws::CloudWatchLogs::Client.new)
+        def subscribe_all!(lambda = build_lambda_client, cloudwatch = build_cloudwatchlogs_client)
           data = {
             timestamp: Time.now.iso8601,
             event: 'log.info',
@@ -36,15 +36,17 @@ module Subscribe
           end
         end
 
-        def build_lambda_client(opts = {})
+        def retry_opts
           # retries: 1s -> 2s -> 2s -> fail
-          Aws::Lambda::Client.new(
-            {
-              retry_limit: 3,
-              retry_base_delay: 1,
-              retry_max_delay: 2
-            }.merge(opts)
-          )
+          { retry_limit: 3, retry_base_delay: 1, retry_max_delay: 2 }
+        end
+
+        def build_lambda_client(opts = {})
+          Aws::Lambda::Client.new(retry_opts.merge(opts))
+        end
+
+        def build_cloudwatchlogs_client(opts = {})
+          Aws::CloudWatchLogs::Client.new(retry_opts.merge(opts))
         end
 
         private
