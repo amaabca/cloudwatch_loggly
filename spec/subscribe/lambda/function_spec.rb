@@ -4,7 +4,7 @@ describe Subscribe::Lambda::Function do
   let(:tags) { { 'test' => 'true' } }
   let(:destination_arn) { ENV.fetch('DESTINATION_ARN') }
   let(:lambda) { described_class.build_lambda_client(stub_responses: true) }
-  let(:cloudwatch) { Aws::CloudWatchLogs::Client.new(stub_responses: true) }
+  let(:cloudwatch) { described_class.build_cloudwatchlogs_client(stub_responses: true) }
   let(:tags_stub) { lambda.stub_data(:list_tags, tags: tags) }
   let(:function_one_arn) { 'arn:aws:lambda:us-west-2:123456789012:function:One' }
   let(:function_two_arn) { 'arn:aws:lambda:us-west-2:123456789012:function:Two' }
@@ -262,6 +262,34 @@ describe Subscribe::Lambda::Function do
       value = described_class.subscribe_all!(lambda, cloudwatch)
       expect(value.fetch(:changed)).to eq(['two'])
       expect(value.fetch(:skipped)).to eq(['one'])
+    end
+
+    context 'when hitting an API rate limit for DescribeSubscriptionFilters' do
+      before(:each) do
+        cloudwatch.handlers.add(Aws::Plugins::RetryErrors::Handler)
+        cloudwatch.stub_responses(
+          :describe_subscription_filters,
+          [
+            'ThrottlingException',
+            'ThrottlingException',
+            'ThrottlingException',
+            log_group_one_subscription
+          ]
+        )
+      end
+
+      it 'sleeps with exponential backoff' do
+        # 1 -> throttle
+        # wait 1s
+        # 2 -> throttle
+        # wait 2s
+        # 3 -> throttle
+        # wait 2s
+        # 4 -> success
+        # >= 5s total
+        time = Benchmark.measure { described_class.subscribe_all!(lambda, cloudwatch) }
+        expect(time.real >= 5).to be true
+      end
     end
   end
 end
