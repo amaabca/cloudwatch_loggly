@@ -19,7 +19,7 @@ Metadata:
       - forwarder
       - lambda
     HomePageUrl: https://github.com/amaabca/cloudwatch_loggly
-    SemanticVersion: 0.5.0
+    SemanticVersion: 1.0.0
     SourceCodeUrl: https://github.com/amaabca/cloudwatch_loggly
 
 Parameters:
@@ -113,7 +113,7 @@ Resources:
     Properties:
       CodeUri: push
       Handler: handler.Push.handle
-      Runtime: ruby2.5
+      Runtime: ruby2.7
       Role: !GetAtt CloudwatchLogglyPushFunctionRole.Arn
       Environment:
         Variables:
@@ -127,7 +127,7 @@ Resources:
     Properties:
       CodeUri: subscribe
       Handler: handler.Subscribe.handle
-      Runtime: ruby2.5
+      Runtime: ruby2.7
       Role: !GetAtt CloudwatchLogglySubscribeFunctionRole.Arn
       Environment:
         Variables:

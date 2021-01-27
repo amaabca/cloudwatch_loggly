@@ -60,17 +60,7 @@ describe Subscribe::Lambda::Function do
         )
       end
 
-      it 'sleeps with exponential backoff' do
-        # 1 -> throttle
-        # wait 1s
-        # 2 -> throttle
-        # wait 2s
-        # 3 -> throttle
-        # wait 2s
-        # 4 -> success
-        # >= 5s total
-        time = Benchmark.measure { subject }
-        expect(time.real >= 5).to be true
+      it 'returns a Subscribe::Lambda::Function after multiple throttle errors' do
         expect(subject).to be_a(Subscribe::Lambda::Function)
       end
     end
@@ -278,17 +268,9 @@ describe Subscribe::Lambda::Function do
         )
       end
 
-      it 'sleeps with exponential backoff' do
-        # 1 -> throttle
-        # wait 1s
-        # 2 -> throttle
-        # wait 2s
-        # 3 -> throttle
-        # wait 2s
-        # 4 -> success
-        # >= 5s total
-        time = Benchmark.measure { described_class.subscribe_all!(lambda, cloudwatch) }
-        expect(time.real >= 5).to be true
+      it 'returns a hash after multiple throttle errors' do
+        response = described_class.subscribe_all!(lambda, cloudwatch)
+        expect(response).to be_a(Hash)
       end
     end
   end

@@ -37,8 +37,7 @@ module Subscribe
         end
 
         def retry_opts
-          # retries: 1s -> 2s -> 2s -> fail
-          { retry_limit: 3, retry_base_delay: 1, retry_max_delay: 2 }
+          { max_attempts: 4, retry_mode: 'standard' }
         end
 
         def build_lambda_client(opts = {})
