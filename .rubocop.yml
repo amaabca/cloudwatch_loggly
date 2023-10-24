@@ -4,12 +4,12 @@ AllCops:
   Exclude:
     - 'bin/**/*'
     - 'vendor/**/*'
-Documentation:
+Style/Documentation:
   Enabled: false
 Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
-Metrics/LineLength:
+Layout/LineLength:
   Max: 120
 Style/Lambda:
   EnforcedStyle: literal

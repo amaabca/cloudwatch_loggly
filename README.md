@@ -50,6 +50,10 @@ If you wish to opt-out a Lambda function from Loggly delivery, add the `cloudwat
 
 By default, the value from the `FilterPatternParameter` is used when subscribing to CloudWatch log events. This value can be overridden on a per-function basis by setting the Lambda function's `cloudwatch_loggly_filter_pattern` tag to the value that you prefer.
 
+### Adding tags to cloudwatch for a lambda
+
+By default, the only tags that will be sent to loggly are the ones specified in `LogTagsParameter`, the owner (account number) and the log group that the logs are from. If you would like to send additional tags then you must add a tag to the lambda that starts with `cloudwatch_loggly_tag`. For example a log group with the tag `cloudwatch_loggly_mfe: omninotes` will have the tag `omninotes` added to the loggly tags.
+
 ### Deploying to the AWS Serverless Application Repository
 
 1. Ensure you have the `aws` and `sam` CLI tools installed locally.
