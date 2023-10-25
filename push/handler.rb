@@ -6,6 +6,7 @@ require 'stringio'
 require 'json'
 require 'uri'
 require 'net/http'
+require 'aws-sdk-lambda'
 
 require_relative 'loggly/exceptions/base'
 require_relative 'loggly/exceptions/client_error'

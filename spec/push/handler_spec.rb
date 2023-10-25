@@ -6,8 +6,16 @@ describe Push do
     let(:message) { read_fixture('push/decoded.json') }
 
     before(:each) do
+      ENV['REGION'] = 'test'
+      allow_any_instance_of(Push::Cloudwatch::Event).to receive(:get_lambda_tags).and_return(
+        'cloudwatch_loggly_tag_app_name' => 'TEST_APP_NAME'
+      )
       prepare_environment!
       stub_loggly_push_bulk(messages: [message])
+    end
+
+    after(:each) do
+      ENV['REGION'] = ''
     end
 
     it 'returns the response body' do

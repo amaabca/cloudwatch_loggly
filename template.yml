@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   CloudWatch to Loggly Log Forwarder
@@ -39,16 +39,16 @@ Parameters:
     Description: >
       An AWS CloudWatch subscription filter pattern directive. Defaults to the empty string.
       See: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
-    Default: ''
+    Default: ""
   BulkTransmissionParameter:
     Type: String
     Description: >
       Tells the log forwarder to use Loggly's bulk transmission endpoint for increased efficiency. Defaults to true.
       See: https://www.loggly.com/docs/http-bulk-endpoint/
-    Default: 'true'
+    Default: "true"
     AllowedValues:
-      - 'true'
-      - 'false'
+      - "true"
+      - "false"
   ScheduleExpressionParameter:
     Type: String
     Description: >
@@ -72,8 +72,17 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+      Policies:
+        - PolicyName: ListLambdaTags
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:ListTags
+                Resource: "*"
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           Action:
             - sts:AssumeRole
@@ -90,7 +99,7 @@ Resources:
       Policies:
         - PolicyName: LogSubscriptionFilterWriteAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
@@ -98,9 +107,9 @@ Resources:
                   - lambda:ListTags
                   - logs:DescribeSubscriptionFilters
                   - logs:PutSubscriptionFilter
-                Resource: '*'
+                Resource: "*"
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           Action:
             - sts:AssumeRole
@@ -120,6 +129,7 @@ Resources:
           LOGGLY_TOKEN: !Ref LogglyTokenParameter
           LOG_TAGS: !Ref LogTagsParameter
           BULK_TRANSMISSION: !Ref BulkTransmissionParameter
+          REGION: !Ref AWS::Region
       Tags:
         cloudwatch_loggly_suppress_subscribe: true
   CloudwatchLogglySubscribeFunction:

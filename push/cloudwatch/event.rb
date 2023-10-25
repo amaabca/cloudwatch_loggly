@@ -11,10 +11,23 @@ module Push
 
       def to_loggly!
         messages = events.map { |e| e.fetch('message') }
+        puts('to_loggly!')
+        puts(messages)
+        puts(data)
         logger.push!(messages)
       end
 
       private
+
+      def retry_opts
+        { max_attempts: 4, retry_mode: 'standard' }
+      end
+
+      def get_lambda_tags(opts = {})
+        Aws::Lambda::Client.new(retry_opts.merge(opts)).list_tags(
+          resource: 'arn:aws:lambda:' + ENV.fetch('REGION') + ':' + owner + ':function:' + log_group
+        ).tags
+      end
 
       def data
         @data ||= JSON.parse(decompressor.read)
@@ -39,23 +52,37 @@ module Push
       def tags
         [
           implied_tags,
-          supplied_tags
+          supplied_tags,
+          lambda_tags
         ]
           .join(',')
           .squeeze(',')
       end
 
+      def lambda_tags
+        tags_to_add = []
+        get_lambda_tags.each do |key, value|
+          tags_to_add.push(value) if key.include? 'cloudwatch_loggly_tag'
+        end
+
+        tags_to_add
+      end
+
       def implied_tags
-        "#{owner},#{log_group}"
+        "#{owner},#{truncated_log_group}"
       end
 
       def owner
         data.fetch('owner')
       end
 
-      def log_group
+      def truncated_log_group
         # coerce to loggly tag restrictions. alphanumeric, max 64 characters
-        data.fetch('logGroup').split('/').last.gsub(/\W/, '')[0..64]
+        log_group.gsub(/\W/, '')[0..64]
+      end
+
+      def log_group
+        data.fetch('logGroup').split('/').last
       end
 
       def supplied_tags
