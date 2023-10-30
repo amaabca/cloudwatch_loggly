@@ -98,7 +98,12 @@ module Subscribe
       end
 
       def fetch_tags!
+        retries ||= 0
+        puts "Retry list tags ##{ retries }"
         lambda.list_tags(resource: arn).tags
+      rescue Aws::Lambda::Errors::ThrottlingException => e
+        puts e.inspect
+        retry if (retries += 1) < 3
       end
 
       def cloudwatch_log_group_name
@@ -107,11 +112,14 @@ module Subscribe
 
       def subscriptions
         @subscriptions ||= begin
+          retries ||= 0
           cloudwatch.describe_subscription_filters(
             log_group_name: cloudwatch_log_group_name,
             filter_name_prefix: FILTER_NAME,
             limit: 1
           ).subscription_filters
+        rescue Aws::CloudWatchLogs::Errors::ThrottlingException
+          retry if (retries += 1) < 3
         end
       end
 
