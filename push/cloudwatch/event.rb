@@ -20,17 +20,16 @@ module Push
       private
 
       def retry_opts
-        { max_attempts: 2, retry_mode: 'standard' }
+        { max_attempts: 4, retry_mode: 'standard' }
       end
 
       def get_lambda_tags(opts = {})
         retries ||= 0
-        puts "try ##{ retries }"
         Aws::Lambda::Client.new(retry_opts.merge(opts)).list_tags(
           resource: 'arn:aws:lambda:' + ENV.fetch('REGION') + ':' + owner + ':function:' + log_group
         ).tags
       rescue Aws::Lambda::Errors::ThrottlingException => e
-        puts e.inspect
+        puts "ThrottlingExceptionGetLambdaTags (retry attempt: #{ retries }): #{ e.inspect }"
         retry if (retries += 1) < 3
       end
 
