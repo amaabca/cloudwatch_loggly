@@ -45,10 +45,8 @@ describe Push::Cloudwatch::Event do
         end
 
         it 'raises exception when retry limit exceeded' do
-          expect { subject.to_loggly! }.to raise_error(
-            StandardError,
-            'ThrottlingExceptionRetryLimitExceeded'
-          )
+          subject.to_loggly!
+          expect(Aws::Lambda::Client).to have_received(:new).exactly(3).times
         end
       end
     end

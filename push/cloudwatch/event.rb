@@ -34,7 +34,9 @@ module Push
         puts "ThrottlingExceptionGetLambdaTags (retry attempt: #{retries}): #{e.inspect}"
         retry if (retries += 1) < 3
 
-        raise StandardError, 'ThrottlingExceptionRetryLimitExceeded'
+        puts 'ThrottlingExceptionGetLambdaTagsRetryLimitExceeded'
+
+        []
       end
       # rubocop:enable Metrics/AbcSize
 

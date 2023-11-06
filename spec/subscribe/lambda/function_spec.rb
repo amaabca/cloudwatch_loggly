@@ -52,19 +52,14 @@ describe Subscribe::Lambda::Function do
       end
 
       it 'raises exception when retry limit exceeded' do
-        expected = expect do
-          described_class.new(
-            arn: 'test',
-            name: 'test',
-            cloudwatch: cloudwatch,
-            lambda: lambda
-          )
-        end
-
-        expected.to raise_error(
-          StandardError,
-          'ThrottlingExceptionRetryLimitExceeded'
+        described_class.new(
+          arn: 'test',
+          name: 'test',
+          cloudwatch: cloudwatch,
+          lambda: lambda
         )
+
+        expect(lambda).to have_received(:list_tags).exactly(3).times
       end
     end
   end
@@ -266,10 +261,8 @@ describe Subscribe::Lambda::Function do
         end
 
         it 'raises exception when retry limit exceeded' do
-          expect { described_class.subscribe_all!(lambda, cloudwatch) }.to raise_error(
-            StandardError,
-            'ThrottlingExceptionRetryLimitExceeded'
-          )
+          described_class.subscribe_all!(lambda, cloudwatch)
+          expect(cloudwatch).to have_received(:describe_subscription_filters).exactly(6).times
         end
       end
     end

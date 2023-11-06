@@ -106,7 +106,9 @@ module Subscribe
         puts "ThrottlingExceptionFetchTags (retry attempt: #{retries}): #{e.inspect}"
         retry if (retries += 1) < 3
 
-        raise StandardError, 'ThrottlingExceptionRetryLimitExceeded'
+        puts 'ThrottlingExceptionFetchTagsRetryLimitExceeded'
+
+        []
       end
 
       def cloudwatch_log_group_name
@@ -127,7 +129,8 @@ module Subscribe
         puts "ThrottlingExceptionSubscriptions (retry attempt: #{retries}): #{e.inspect}"
         retry if (retries += 1) < 3
 
-        raise StandardError, 'ThrottlingExceptionRetryLimitExceeded'
+        puts 'ThrottlingExceptionSubscriptionsRetryLimitExceeded'
+        []
       end
 
       def remote_filter_pattern
