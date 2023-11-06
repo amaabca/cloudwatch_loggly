@@ -51,7 +51,7 @@ describe Subscribe::Lambda::Function do
         )
       end
 
-      it 'raises exception when retry limit exceeded' do
+      it 'retries method 3 times for each function' do
         described_class.new(
           arn: 'test',
           name: 'test',
@@ -260,7 +260,7 @@ describe Subscribe::Lambda::Function do
           )
         end
 
-        it 'raises exception when retry limit exceeded' do
+        it 'retries method 3 times for each function' do
           described_class.subscribe_all!(lambda, cloudwatch)
           expect(cloudwatch).to have_received(:describe_subscription_filters).exactly(6).times
         end

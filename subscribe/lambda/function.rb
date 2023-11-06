@@ -102,11 +102,11 @@ module Subscribe
       def fetch_tags!
         retries ||= 0
         lambda.list_tags(resource: arn).tags
-      rescue Aws::Lambda::Errors::ThrottlingException => e
-        puts "ThrottlingExceptionFetchTags (retry attempt: #{retries}): #{e.inspect}"
+      rescue Aws::Lambda::Errors::ThrottlingException
+        puts "ThrottlingExceptionFetchTags (Resource: #{name}) - Retry attempt: #{retries}"
         retry if (retries += 1) < 3
 
-        puts 'ThrottlingExceptionFetchTagsRetryLimitExceeded'
+        puts "ThrottlingExceptionFetchTagsRetryLimitExceeded (Resource: #{name})"
 
         []
       end
@@ -125,11 +125,11 @@ module Subscribe
             limit: 1
           ).subscription_filters
         end
-      rescue Aws::CloudWatchLogs::Errors::ThrottlingException => e
-        puts "ThrottlingExceptionSubscriptions (retry attempt: #{retries}): #{e.inspect}"
+      rescue Aws::CloudWatchLogs::Errors::ThrottlingException
+        puts "ThrottlingExceptionSubscriptions (Resource: #{name}) - Retry attempt: #{retries}"
         retry if (retries += 1) < 3
 
-        puts 'ThrottlingExceptionSubscriptionsRetryLimitExceeded'
+        puts "ThrottlingExceptionSubscriptionsRetryLimitExceeded (Resource: #{name})"
         []
       end
 

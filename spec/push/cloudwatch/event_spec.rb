@@ -44,7 +44,7 @@ describe Push::Cloudwatch::Event do
           )
         end
 
-        it 'raises exception when retry limit exceeded' do
+        it 'retries method 3 times' do
           subject.to_loggly!
           expect(Aws::Lambda::Client).to have_received(:new).exactly(3).times
         end
