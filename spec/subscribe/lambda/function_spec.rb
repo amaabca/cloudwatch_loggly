@@ -44,24 +44,27 @@ describe Subscribe::Lambda::Function do
   end
 
   describe '#initialize' do
-    context 'when hitting an API rate limit for ListTags', github_issue: '5' do
+    context 'when hitting throttling exceptions' do
       before(:each) do
-        # stubbed responses disables retry by default - we need to turn it
-        # back on to test the behavior
-        lambda.handlers.add(Aws::Plugins::RetryErrors::Handler)
-        lambda.stub_responses(
-          :list_tags,
-          [
-            'ThrottlingException',
-            'ThrottlingException',
-            'ThrottlingException',
-            tags_stub
-          ]
+        allow(lambda).to receive(:list_tags).and_raise(
+          Aws::Lambda::Errors::ThrottlingException.new('test', 'test')
         )
       end
 
-      it 'returns a Subscribe::Lambda::Function after multiple throttle errors' do
-        expect(subject).to be_a(Subscribe::Lambda::Function)
+      it 'raises exception when retry limit exceeded' do
+        expected = expect do
+          described_class.new(
+            arn: 'test',
+            name: 'test',
+            cloudwatch: cloudwatch,
+            lambda: lambda
+          )
+        end
+
+        expected.to raise_error(
+          StandardError,
+          'ThrottlingExceptionRetryLimitExceeded'
+        )
       end
     end
   end
@@ -254,23 +257,20 @@ describe Subscribe::Lambda::Function do
       expect(value.fetch(:skipped)).to eq(['one'])
     end
 
-    context 'when hitting an API rate limit for DescribeSubscriptionFilters' do
-      before(:each) do
-        cloudwatch.handlers.add(Aws::Plugins::RetryErrors::Handler)
-        cloudwatch.stub_responses(
-          :describe_subscription_filters,
-          [
-            'ThrottlingException',
-            'ThrottlingException',
-            'ThrottlingException',
-            log_group_one_subscription
-          ]
-        )
-      end
+    describe 'subscriptions' do
+      context 'when hitting throttling exceptions' do
+        before(:each) do
+          allow(cloudwatch).to receive(:describe_subscription_filters).and_raise(
+            Aws::CloudWatchLogs::Errors::ThrottlingException.new('test', 'test')
+          )
+        end
 
-      it 'returns a hash after multiple throttle errors' do
-        response = described_class.subscribe_all!(lambda, cloudwatch)
-        expect(response).to be_a(Hash)
+        it 'raises exception when retry limit exceeded' do
+          expect { described_class.subscribe_all!(lambda, cloudwatch) }.to raise_error(
+            StandardError,
+            'ThrottlingExceptionRetryLimitExceeded'
+          )
+        end
       end
     end
   end

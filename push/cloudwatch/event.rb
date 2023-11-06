@@ -23,15 +23,20 @@ module Push
         { max_attempts: 4, retry_mode: 'standard' }
       end
 
+      # rubocop:disable Metrics/AbcSize
       def get_lambda_tags(opts = {})
         retries ||= 0
+
         Aws::Lambda::Client.new(retry_opts.merge(opts)).list_tags(
           resource: 'arn:aws:lambda:' + ENV.fetch('REGION') + ':' + owner + ':function:' + log_group
         ).tags
       rescue Aws::Lambda::Errors::ThrottlingException => e
-        puts "ThrottlingExceptionGetLambdaTags (retry attempt: #{ retries }): #{ e.inspect }"
+        puts "ThrottlingExceptionGetLambdaTags (retry attempt: #{retries}): #{e.inspect}"
         retry if (retries += 1) < 3
+
+        raise StandardError, 'ThrottlingExceptionRetryLimitExceeded'
       end
+      # rubocop:enable Metrics/AbcSize
 
       def data
         @data ||= JSON.parse(decompressor.read)
