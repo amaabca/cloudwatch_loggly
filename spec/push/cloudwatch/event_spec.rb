@@ -36,6 +36,19 @@ describe Push::Cloudwatch::Event do
         value = subject.to_loggly!
         expect(value).to eq('{"success":true}')
       end
+
+      context 'when throttling exception is thrown' do
+        before(:each) do
+          allow(Aws::Lambda::Client).to receive(:new).and_raise(
+            Aws::Lambda::Errors::ThrottlingException.new('test', 'test')
+          )
+        end
+
+        it 'retries method 3 times' do
+          subject.to_loggly!
+          expect(Aws::Lambda::Client).to have_received(:new).exactly(3).times
+        end
+      end
     end
   end
 end

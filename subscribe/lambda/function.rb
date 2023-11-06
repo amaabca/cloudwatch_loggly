@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
+
 module Subscribe
   module Lambda
     class Function
@@ -98,7 +100,15 @@ module Subscribe
       end
 
       def fetch_tags!
+        retries ||= 0
         lambda.list_tags(resource: arn).tags
+      rescue Aws::Lambda::Errors::ThrottlingException
+        puts "ThrottlingExceptionFetchTags (Resource: #{name}) - Retry attempt: #{retries}"
+        retry if (retries += 1) < 3
+
+        puts "ThrottlingExceptionFetchTagsRetryLimitExceeded (Resource: #{name})"
+
+        []
       end
 
       def cloudwatch_log_group_name
@@ -107,12 +117,20 @@ module Subscribe
 
       def subscriptions
         @subscriptions ||= begin
+          retries ||= 0
+
           cloudwatch.describe_subscription_filters(
             log_group_name: cloudwatch_log_group_name,
             filter_name_prefix: FILTER_NAME,
             limit: 1
           ).subscription_filters
         end
+      rescue Aws::CloudWatchLogs::Errors::ThrottlingException
+        puts "ThrottlingExceptionSubscriptions (Resource: #{name}) - Retry attempt: #{retries}"
+        retry if (retries += 1) < 3
+
+        puts "ThrottlingExceptionSubscriptionsRetryLimitExceeded (Resource: #{name})"
+        []
       end
 
       def remote_filter_pattern
@@ -125,3 +143,4 @@ module Subscribe
     end
   end
 end
+# rubocop:enable Metrics/ClassLength
